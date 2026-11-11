@@ -12,6 +12,7 @@ const GAME_OVER_HINT_COLOR = "#cbd5e1";
 const PAUSE_PANEL_COLOR = 0x334155;
 const PAUSE_TITLE_COLOR = "#fbbf24";
 const PAUSE_HINT_COLOR = "#cbd5e1";
+const PHASE_2_TEXT_COLOR = "#fbbf24";
 
 /**
  * Статичные элементы интерфейса: заголовок, счёт, подсказка
@@ -19,6 +20,7 @@ const PAUSE_HINT_COLOR = "#cbd5e1";
  */
 export class UiRenderer {
   private scoreText!: Phaser.GameObjects.Text;
+  private phaseText!: Phaser.GameObjects.Text;
   private gameOverPanel!: Phaser.GameObjects.Rectangle;
   private gameOverTitle!: Phaser.GameObjects.Text;
   private gameOverScoreText!: Phaser.GameObjects.Text;
@@ -50,6 +52,15 @@ export class UiRenderer {
         color: TEXT_COLOR,
       })
       .setOrigin(0.5, 0);
+
+    this.phaseText = this.scene.add
+      .text(panelX, 160, "ФАЗА 2", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "22px",
+        color: PHASE_2_TEXT_COLOR,
+      })
+      .setOrigin(0.5, 0)
+      .setVisible(false);
 
     this.scene.add
       .text(
@@ -158,5 +169,13 @@ export class UiRenderer {
     this.pausePanel.setVisible(visible);
     this.pauseTitle.setVisible(visible);
     this.pauseHint.setVisible(visible);
+  }
+
+  showPhase2(): void {
+    this.phaseText.setVisible(true);
+  }
+
+  hidePhase2(): void {
+    this.phaseText.setVisible(false);
   }
 }

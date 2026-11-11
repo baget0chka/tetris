@@ -5,7 +5,14 @@ import { UiRenderer } from "./UiRenderer";
 import { InputController } from "./InputController";
 import { createPiece } from "./PieceFactory";
 import { ActivePiece, rotateClockwise } from "./tetrominoes";
-import { FALL_INTERVAL_MS, ROTATION_KICKS, SOFT_DROP_INTERVAL_MS } from "./constants";
+import {
+  FALL_INTERVAL_MS,
+  PHASE_2_AUTO_DROP_ROW,
+  PHASE_2_SCORE,
+  PHASE_2_SPEEDUP,
+  ROTATION_KICKS,
+  SOFT_DROP_INTERVAL_MS,
+} from "./constants";
 
 /**
  * Тетрис: сверху падают фигуры, из заполненных рядов линии исчезают,
@@ -28,6 +35,7 @@ export class GameScene extends Phaser.Scene {
 
   private isGameOver = false;
   private isPaused = false;
+  private isPhase2 = false;
   private dropTimer = 0;
 
   constructor() {
@@ -61,6 +69,11 @@ export class GameScene extends Phaser.Scene {
     if (this.isPaused || this.isGameOver || !this.piece) return;
 
     this.handleGravity(delta);
+
+    // Вторая фаза: фигура мгновенно сбрасывается, достигнув 6-й строки сверху.
+    if (this.piece && this.isPhase2 && this.piece.y >= PHASE_2_AUTO_DROP_ROW) {
+      this.hardDrop();
+    }
   }
 
   // --- Спавн и гравитация ---------------------------------------------
@@ -79,9 +92,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleGravity(delta: number): void {
-    const interval = this.inputController.isSoftDropDown()
-      ? SOFT_DROP_INTERVAL_MS
-      : FALL_INTERVAL_MS;
+    const speedup = this.isPhase2 ? PHASE_2_SPEEDUP : 1;
+    const interval =
+      (this.inputController.isSoftDropDown()
+        ? SOFT_DROP_INTERVAL_MS
+        : FALL_INTERVAL_MS) / speedup;
     this.dropTimer += delta;
     if (this.dropTimer >= interval) {
       this.dropTimer = 0;
@@ -157,6 +172,12 @@ export class GameScene extends Phaser.Scene {
     const cleared = this.board.lockPiece(shape, x, y, color);
     if (cleared > 0) {
       this.uiRenderer.setScore(this.board.score);
+
+      // Переход во вторую фазу по достижении порога очков.
+      if (!this.isPhase2 && this.board.score >= PHASE_2_SCORE) {
+        this.isPhase2 = true;
+        this.uiRenderer.showPhase2();
+      }
     }
 
     this.piece = null;
@@ -177,6 +198,7 @@ export class GameScene extends Phaser.Scene {
     this.board.reset();
     this.isGameOver = false;
     this.isPaused = false;
+    this.isPhase2 = false;
     this.piece = null;
     this.dropTimer = 0;
     this.inputController.reset();
@@ -184,6 +206,7 @@ export class GameScene extends Phaser.Scene {
     this.uiRenderer.setScore(0);
     this.uiRenderer.hideGameOver();
     this.uiRenderer.hidePause();
+    this.uiRenderer.hidePhase2();
 
     this.spawnPiece();
   }

@@ -61,11 +61,12 @@ export class InputController {
     this.handlePause();
 
     if (isPaused) {
-      // Синхронизируем «фронты» нажатий, чтобы после снятия паузы
-      // зажатые во время паузы клавиши не вызывали действий.
+      // Во время паузы рестарт доступен, остальные действия заблокированы.
+      // Остальные «фронты» нажатий синхронизируются, чтобы после снятия
+      // паузы зажатые во время паузы клавиши не вызывали действий.
+      this.handleRestart();
       this.wasUpDown = this.cursors.up.isDown;
       this.wasSpaceDown = this.spaceKey.isDown;
-      this.wasRestartDown = this.rKey.isDown || this.enterKey.isDown;
       return;
     }
 
