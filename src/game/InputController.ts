@@ -11,13 +11,16 @@ export interface InputCallbacks {
 }
 
 /**
- * Клавиатура: стрелки, пробел, R, Enter, P и Esc.
+ * Клавиатура: WASD, пробел, R, Enter, P и Esc.
  * Отслеживает удержания (повтор движения влево/вправо)
  * и «передние фронты» нажатий (поворот, сброс, рестарт, пауза без автоповтора).
  * Во время паузы обрабатывается только переключение паузы.
  */
 export class InputController {
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private wKey!: Phaser.Input.Keyboard.Key;
+  private aKey!: Phaser.Input.Keyboard.Key;
+  private sKey!: Phaser.Input.Keyboard.Key;
+  private dKey!: Phaser.Input.Keyboard.Key;
   private spaceKey!: Phaser.Input.Keyboard.Key;
   private rKey!: Phaser.Input.Keyboard.Key;
   private enterKey!: Phaser.Input.Keyboard.Key;
@@ -39,7 +42,18 @@ export class InputController {
       throw new Error("Keyboard input is unavailable.");
     }
 
-    this.cursors = scene.input.keyboard.createCursorKeys();
+    this.wKey = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.W,
+    );
+    this.aKey = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.A,
+    );
+    this.sKey = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.S,
+    );
+    this.dKey = scene.input.keyboard.addKey(
+      Phaser.Input.Keyboard.KeyCodes.D,
+    );
     this.spaceKey = scene.input.keyboard.addKey(
       Phaser.Input.Keyboard.KeyCodes.SPACE,
     );
@@ -65,7 +79,7 @@ export class InputController {
       // Остальные «фронты» нажатий синхронизируются, чтобы после снятия
       // паузы зажатые во время паузы клавиши не вызывали действий.
       this.handleRestart();
-      this.wasUpDown = this.cursors.up.isDown;
+      this.wasUpDown = this.wKey.isDown;
       this.wasSpaceDown = this.spaceKey.isDown;
       return;
     }
@@ -76,9 +90,9 @@ export class InputController {
     this.handleHardDrop();
   }
 
-  /** Зажата ли стрелка вниз (ускоренное падение). */
+  /** Зажата ли клавиша S (ускоренное падение). */
   isSoftDropDown(): boolean {
-    return this.cursors.down.isDown;
+    return this.sKey.isDown;
   }
 
   /** Сбрасывает состояние удержаний (при рестарте). */
@@ -89,8 +103,8 @@ export class InputController {
 
   private handleMovement(delta: number): void {
     let direction = 0;
-    if (this.cursors.left.isDown) direction -= 1;
-    if (this.cursors.right.isDown) direction += 1;
+    if (this.aKey.isDown) direction -= 1;
+    if (this.dKey.isDown) direction += 1;
 
     if (direction === 0) {
       this.keyHeld = false;
@@ -113,10 +127,10 @@ export class InputController {
   }
 
   private handleRotation(): void {
-    if (this.cursors.up.isDown && !this.wasUpDown) {
+    if (this.wKey.isDown && !this.wasUpDown) {
       this.callbacks.onRotate();
     }
-    this.wasUpDown = this.cursors.up.isDown;
+    this.wasUpDown = this.wKey.isDown;
   }
 
   private handleHardDrop(): void {

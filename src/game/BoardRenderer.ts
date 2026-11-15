@@ -9,6 +9,12 @@ const BOARD_BACKGROUND_COLOR = 0x1e293b;
 const BOARD_FRAME_COLOR = 0x334155;
 const EMPTY_CELL_COLOR = 0x0f172a;
 
+// --- Сетка поля -------------------------------------------------------
+
+const GRID_LINE_COLOR = 0x334155;
+const GRID_LINE_ALPHA = 0.6;
+const GRID_LINE_WIDTH = 1;
+
 /**
  * Отрисовка доски: фон, рамка и клетки.
  * Клетки создаются один раз, дальше только переключается цвет и видимость.
@@ -63,6 +69,10 @@ export class BoardRenderer {
       BOARD_FRAME_COLOR,
     );
 
+    // Сетка: тонкие линии между клетками. Рисуется поверх фона,
+    // но под клетками — заполненные клетки её перекрывают.
+    this.drawGrid(width, height);
+
     // Клетки: создаём один раз, дальше только переключаем цвет и видимость.
     for (let row = 0; row < ROWS; row++) {
       const rectRow: Phaser.GameObjects.Rectangle[] = [];
@@ -78,6 +88,22 @@ export class BoardRenderer {
         rectRow.push(rect);
       }
       this.cellRects.push(rectRow);
+    }
+  }
+
+  /** Рисует линии сетки по границам клеток игрового поля. */
+  private drawGrid(width: number, height: number): void {
+    const grid = this.scene.add.graphics();
+    grid.lineStyle(GRID_LINE_WIDTH, GRID_LINE_COLOR, GRID_LINE_ALPHA);
+
+    for (let col = 1; col < COLS; col++) {
+      const x = BOARD_X + col * CELL_SIZE;
+      grid.lineBetween(x, BOARD_Y, x, BOARD_Y + height);
+    }
+
+    for (let row = 1; row < ROWS; row++) {
+      const y = BOARD_Y + row * CELL_SIZE;
+      grid.lineBetween(BOARD_X, y, BOARD_X + width, y);
     }
   }
 
