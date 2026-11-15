@@ -3,7 +3,7 @@ import { Board } from "./Board";
 import { BoardRenderer } from "./BoardRenderer";
 import { UiRenderer } from "./UiRenderer";
 import { InputController } from "./InputController";
-import { createPiece } from "./PieceFactory";
+import { createPiece, resetPieceBag } from "./PieceFactory";
 import { ActivePiece, rotateClockwise } from "./tetrominoes";
 import {
   FALL_INTERVAL_MS,
@@ -18,7 +18,7 @@ import {
  * Тетрис: сверху падают фигуры, из заполненных рядов линии исчезают,
  * при отсутствии места для новой фигуры игра заканчивается.
  *
- * Управление: ← → — движение, ↑ — поворот, ↓ — ускоренное падение,
+ * Управление: A / D — движение, W — поворот, S — ускоренное падение,
  * Пробел — мгновенный сброс вниз, R / Enter — начать заново,
  * P / Esc — пауза и продолжение.
  *
@@ -196,6 +196,7 @@ export class GameScene extends Phaser.Scene {
 
   private restart(): void {
     this.board.reset();
+    resetPieceBag();
     this.isGameOver = false;
     this.isPaused = false;
     this.isPhase2 = false;

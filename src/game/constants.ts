@@ -14,15 +14,15 @@ export const BOARD_Y = (GAME_HEIGHT - ROWS * CELL_SIZE) / 2; // 0
 // --- Темп игры -------------------------------------------------------
 
 export const FALL_INTERVAL_MS = 600; // шаг свободного падения
-export const SOFT_DROP_INTERVAL_MS = 50; // шаг падения при зажатой стрелке вниз
+export const SOFT_DROP_INTERVAL_MS = 50; // шаг падения при зажатой клавише S
 export const MOVE_REPEAT_MS = 90; // повтор движения влево/вправо при удержании
 export const LINE_SCORES = [0, 100, 300, 500, 800]; // очки за 1..4 линии за раз
 
 // --- Вторая фаза -------------------------------------------------------
 
 export const PHASE_2_SCORE = 500; // счёт, при котором начинается вторая фаза
-export const PHASE_2_SPEEDUP = 2; // во сколько раз быстрее падают фигуры
-export const PHASE_2_AUTO_DROP_ROW = 7; // индекс 6-й строки сверху: автосброс фигуры
+export const PHASE_2_SPEEDUP = 1.5; // во сколько раз быстрее падают фигуры
+export const PHASE_2_AUTO_DROP_ROW = 7; // автосброс фигуры
 
 // --- Поворот фигуры --------------------------------------------------
 

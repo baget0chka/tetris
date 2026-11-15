@@ -66,7 +66,7 @@ export class UiRenderer {
       .text(
         panelX,
         height - 16,
-        "← → — движение\n↑ — поворот\n↓ — падение быстрее\nПробел — сброс вниз\nP / Esc — пауза\nR / Enter — заново",
+        "A / D — движение\nW — поворот\nS — падение быстрее\nПробел — сброс вниз\nP / Esc — пауза\nR / Enter — заново",
         {
           fontFamily: "system-ui, sans-serif",
           fontSize: "16px",
