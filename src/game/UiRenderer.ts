@@ -1,5 +1,9 @@
 import Phaser from "phaser";
-import { BOARD_X } from "./constants";
+import {
+  BOARD_X,
+  PHASE_2_AUTO_DROP_ROW,
+  PHASE_2_SPEEDUP,
+} from "./constants";
 
 // --- Цвета и размеры интерфейса --------------------------------------
 
@@ -13,10 +17,12 @@ const PAUSE_PANEL_COLOR = 0x334155;
 const PAUSE_TITLE_COLOR = "#fbbf24";
 const PAUSE_HINT_COLOR = "#cbd5e1";
 const PHASE_2_TEXT_COLOR = "#fbbf24";
+const PHASE_2_PANEL_COLOR = 0x334155;
+const PHASE_2_HINT_COLOR = "#cbd5e1";
 
 /**
  * Статичные элементы интерфейса: заголовок, счёт, подсказка
- * по управлению и панель «Игра окончена».
+ * по управлению, панели «Игра окончена», «Пауза» и «Фаза 2».
  */
 export class UiRenderer {
   private scoreText!: Phaser.GameObjects.Text;
@@ -28,6 +34,10 @@ export class UiRenderer {
   private pausePanel!: Phaser.GameObjects.Rectangle;
   private pauseTitle!: Phaser.GameObjects.Text;
   private pauseHint!: Phaser.GameObjects.Text;
+  private phase2Panel!: Phaser.GameObjects.Rectangle;
+  private phase2Title!: Phaser.GameObjects.Text;
+  private phase2Body!: Phaser.GameObjects.Text;
+  private phase2Hint!: Phaser.GameObjects.Text;
 
   constructor(private readonly scene: Phaser.Scene) {
     this.createUi();
@@ -134,6 +144,46 @@ export class UiRenderer {
       .setOrigin(0.5);
 
     this.setPauseVisible(false);
+
+    // Панель «Фаза 2» (скрыта до перехода во вторую фазу).
+    this.phase2Panel = this.scene.add.rectangle(
+      cx,
+      cy,
+      400,
+      240,
+      PHASE_2_PANEL_COLOR,
+    );
+    this.phase2Title = this.scene.add
+      .text(cx, cy - 85, "ФАЗА 2", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "32px",
+        color: PAUSE_TITLE_COLOR,
+      })
+      .setOrigin(0.5);
+    this.phase2Body = this.scene.add
+      .text(
+        cx,
+        cy - 5,
+        `Фигуры падают в ${PHASE_2_SPEEDUP} раза быстрее.\n` +
+          `Дойдя до ${PHASE_2_AUTO_DROP_ROW}-й линии сверху,\n` +
+          "фигура сразу сбрасывается вниз.",
+        {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: "18px",
+          color: TEXT_COLOR,
+          align: "center",
+        },
+      )
+      .setOrigin(0.5);
+    this.phase2Hint = this.scene.add
+      .text(cx, cy + 80, "Пробел — продолжить", {
+        fontFamily: "system-ui, sans-serif",
+        fontSize: "16px",
+        color: PHASE_2_HINT_COLOR,
+      })
+      .setOrigin(0.5);
+
+    this.setPhase2DialogVisible(false);
   }
 
   setScore(score: number): void {
@@ -177,5 +227,20 @@ export class UiRenderer {
 
   hidePhase2(): void {
     this.phaseText.setVisible(false);
+  }
+
+  showPhase2Dialog(): void {
+    this.setPhase2DialogVisible(true);
+  }
+
+  hidePhase2Dialog(): void {
+    this.setPhase2DialogVisible(false);
+  }
+
+  private setPhase2DialogVisible(visible: boolean): void {
+    this.phase2Panel.setVisible(visible);
+    this.phase2Title.setVisible(visible);
+    this.phase2Body.setVisible(visible);
+    this.phase2Hint.setVisible(visible);
   }
 }
