@@ -7,6 +7,7 @@ import { createPiece, resetPieceBag } from "./PieceFactory";
 import { ActivePiece, rotateClockwise } from "./tetrominoes";
 import {
   FALL_INTERVAL_MS,
+  LINE_CLEAR_PAUSE_MS,
   PHASE_2_AUTO_DROP_ROW,
   PHASE_2_SCORE,
   PHASE_2_SPEEDUP,
@@ -19,8 +20,8 @@ import {
  * при отсутствии места для новой фигуры игра заканчивается.
  *
  * Управление: A / D — движение, W — поворот, S — ускоренное падение,
- * Пробел — мгновенный сброс вниз, R / Enter — начать заново,
- * P / Esc — пауза и продолжение.
+ * Пробел — мгновенный сброс вниз (и закрытие окна фазы 2),
+ * R / Enter — начать заново, P / Esc — пауза и продолжение.
  *
  * Сцена-координатор: связывает модель (Board), ввод (InputController),
  * отрисовку (BoardRenderer) и интерфейс (UiRenderer).
@@ -36,7 +37,11 @@ export class GameScene extends Phaser.Scene {
   private isGameOver = false;
   private isPaused = false;
   private isPhase2 = false;
+  /** Открыто окно-объяснение о начале второй фазы: игра замирает. */
+  private isPhase2DialogOpen = false;
   private dropTimer = 0;
+  /** Остаток короткой паузы после сборки линии (0 — паузы нет). */
+  private lineClearPauseTimer = 0;
 
   constructor() {
     super("GameScene");
@@ -56,17 +61,30 @@ export class GameScene extends Phaser.Scene {
       onHardDrop: () => this.hardDrop(),
       onRestart: () => this.restart(),
       onTogglePause: () => this.togglePause(),
+      onClosePhase2Dialog: () => this.closePhase2Dialog(),
     });
 
     this.spawnPiece();
   }
 
   update(_time: number, delta: number): void {
-    this.inputController.update(delta, this.isPaused);
+    this.inputController.update(delta, this.isPaused, this.isPhase2DialogOpen);
 
-    // Во время паузы и game over игровое состояние не меняется:
-    // таймер падения не тикает, движения и спавн не выполняются.
-    if (this.isPaused || this.isGameOver || !this.piece) return;
+    // Во время паузы, game over и открытого окна фазы 2 игровое состояние
+    // не меняется: таймер падения не тикает, движения и спавн не выполняются.
+    if (this.isPaused || this.isGameOver || this.isPhase2DialogOpen) return;
+
+    // Короткая пауза после сборки линии: поле «замирает», чтобы игрок
+    // успел заметить результат. Новая фигура появится по её окончании.
+    if (this.lineClearPauseTimer > 0) {
+      this.lineClearPauseTimer = Math.max(0, this.lineClearPauseTimer - delta);
+      if (this.lineClearPauseTimer === 0) {
+        this.spawnPiece();
+      }
+      return;
+    }
+
+    if (!this.piece) return;
 
     this.handleGravity(delta);
 
@@ -107,7 +125,7 @@ export class GameScene extends Phaser.Scene {
   // --- Пауза ------------------------------------------------------------
 
   private togglePause(): void {
-    if (this.isGameOver) return;
+    if (this.isGameOver || this.isPhase2DialogOpen) return;
 
     this.isPaused = !this.isPaused;
     this.inputController.reset();
@@ -117,6 +135,21 @@ export class GameScene extends Phaser.Scene {
     } else {
       this.uiRenderer.hidePause();
     }
+  }
+
+  // --- Окно начала второй фазы ------------------------------------------
+
+  private openPhase2Dialog(): void {
+    this.isPhase2DialogOpen = true;
+    this.uiRenderer.showPhase2();
+    this.uiRenderer.showPhase2Dialog();
+  }
+
+  private closePhase2Dialog(): void {
+    if (!this.isPhase2DialogOpen) return;
+
+    this.isPhase2DialogOpen = false;
+    this.uiRenderer.hidePhase2Dialog();
   }
 
   // --- Действия с фигурой ---------------------------------------------
@@ -173,14 +206,25 @@ export class GameScene extends Phaser.Scene {
     if (cleared > 0) {
       this.uiRenderer.setScore(this.board.score);
 
-      // Переход во вторую фазу по достижении порога очков.
+      // Переход во вторую фазу по достижении порога очков:
+      // показываем окно с объяснением, игра замирает до нажатия пробела.
       if (!this.isPhase2 && this.board.score >= PHASE_2_SCORE) {
         this.isPhase2 = true;
-        this.uiRenderer.showPhase2();
+        this.openPhase2Dialog();
       }
     }
 
     this.piece = null;
+    this.dropTimer = 0;
+
+    if (cleared > 0) {
+      // Линия собрана: замираем на LINE_CLEAR_PAUSE_MS и только потом
+      // выпускаем следующую фигуру.
+      this.lineClearPauseTimer = LINE_CLEAR_PAUSE_MS;
+      this.boardRenderer.draw(this.board, null);
+      return;
+    }
+
     this.spawnPiece();
   }
 
@@ -200,14 +244,17 @@ export class GameScene extends Phaser.Scene {
     this.isGameOver = false;
     this.isPaused = false;
     this.isPhase2 = false;
+    this.isPhase2DialogOpen = false;
     this.piece = null;
     this.dropTimer = 0;
+    this.lineClearPauseTimer = 0;
     this.inputController.reset();
 
     this.uiRenderer.setScore(0);
     this.uiRenderer.hideGameOver();
     this.uiRenderer.hidePause();
     this.uiRenderer.hidePhase2();
+    this.uiRenderer.hidePhase2Dialog();
 
     this.spawnPiece();
   }

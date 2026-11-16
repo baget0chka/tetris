@@ -8,6 +8,7 @@ export interface InputCallbacks {
   onHardDrop: () => void;
   onRestart: () => void;
   onTogglePause: () => void;
+  onClosePhase2Dialog: () => void;
 }
 
 /**
@@ -15,6 +16,7 @@ export interface InputCallbacks {
  * Отслеживает удержания (повтор движения влево/вправо)
  * и «передние фронты» нажатий (поворот, сброс, рестарт, пауза без автоповтора).
  * Во время паузы обрабатывается только переключение паузы.
+ * Пока открыто окно фазы 2, игра замирает и пробел только закрывает окно.
  */
 export class InputController {
   private wKey!: Phaser.Input.Keyboard.Key;
@@ -71,7 +73,20 @@ export class InputController {
     );
   }
 
-  update(delta: number, isPaused: boolean): void {
+  update(delta: number, isPaused: boolean, isPhase2DialogOpen = false): void {
+    if (isPhase2DialogOpen) {
+      // Окно фазы 2 закрывается пробелом; игровые действия заблокированы,
+      // а «фронты» нажатий синхронизируются, чтобы после закрытия окна
+      // зажатые клавиши не вызвали сброс или поворот.
+      this.handlePhase2Dialog();
+      this.wasUpDown = this.wKey.isDown;
+      this.wasRestartDown = this.rKey.isDown || this.enterKey.isDown;
+      this.wasPauseDown = this.pKey.isDown || this.escKey.isDown;
+      this.keyHeld = false;
+      this.moveTimer = 0;
+      return;
+    }
+
     this.handlePause();
 
     if (isPaused) {
@@ -136,6 +151,13 @@ export class InputController {
   private handleHardDrop(): void {
     if (this.spaceKey.isDown && !this.wasSpaceDown) {
       this.callbacks.onHardDrop();
+    }
+    this.wasSpaceDown = this.spaceKey.isDown;
+  }
+
+  private handlePhase2Dialog(): void {
+    if (this.spaceKey.isDown && !this.wasSpaceDown) {
+      this.callbacks.onClosePhase2Dialog();
     }
     this.wasSpaceDown = this.spaceKey.isDown;
   }

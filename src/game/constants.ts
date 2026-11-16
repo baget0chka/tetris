@@ -17,6 +17,7 @@ export const FALL_INTERVAL_MS = 600; // шаг свободного падени
 export const SOFT_DROP_INTERVAL_MS = 50; // шаг падения при зажатой клавише S
 export const MOVE_REPEAT_MS = 90; // повтор движения влево/вправо при удержании
 export const LINE_SCORES = [0, 100, 300, 500, 800]; // очки за 1..4 линии за раз
+export const LINE_CLEAR_PAUSE_MS = 1000; // замирание поля после сборки линии
 
 // --- Вторая фаза -------------------------------------------------------
 
